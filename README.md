@@ -1,6 +1,8 @@
 # Intermittent burst generator plugin
 The **Intermittent Burst Generator** plugin is designed to send stimulation events on a specified event channel for a certain number of pulses. After this burst of stimulation, it will enter a "Sham Duration" phase, where no stimulation pulses are sent. This cycle of stimulation and sham duration can be customized based on the user’s requirements.
 
+However, please note: The plugin does not generate continuous stimulation signals. Instead, it produces stimulation signals based on specific events, such as the crossing of a certain phase, from the event occured in crossing detector. The stimulation occurs when the specified event or condition is met, not continuously.
+
 ![Intermittent burst generator plugin image](Intermittent-burst-generator.PNG)
 
 ### Parameter:
