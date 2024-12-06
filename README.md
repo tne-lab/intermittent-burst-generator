@@ -11,10 +11,10 @@ The **Intermittent Burst Generator** plugin is designed to send stimulation even
   Specifies the duration (in milliseconds) of each pulse triggered by the Intermittent Burst Generator. This pulse is sent through the channels specified in the JSON configuration file.
 
 - **Sham Duration (s):**  
-  Defines how long (in seconds) the sham pulses or events are sent. This value controls the duration of the sham event.
+  Defines how long (in seconds) the sham pulses or events are sent. This value controls the duration of the sham period.
 
 - **Stim Pulse:**  
-  Specifies the number of stimulation pulses that must occur before the next sham duration is activated. It determines how many stimulation pulses happen before a new sham event is triggered.
+  Specifies the number of stimulation pulses that must occur before the next sham period is activated. It determines how many stimulation pulses happen before a new sham event is triggered.
 
 
 ### Note
