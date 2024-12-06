@@ -18,10 +18,12 @@ The **Intermittent Burst Generator** plugin is designed to send stimulation even
 ### Note
 The json format is as follow 
 Example: IN:OUT
+```json
 {
-1:1,
-2:2
+  "1": 1,
+  "2": 2
 }
+```
 where IN in the input event channel and OUT is the output event channel.
 
 ### Building the plugins
