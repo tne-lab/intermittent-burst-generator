@@ -2,7 +2,7 @@
   ==============================================================================
 
     IntermittentBurstGeneratorEditor.h
-    Created: 3rd December 2024
+    Created: 7th December 2024
     Author:  Sumedh Sopan Nagrale
 
   ==============================================================================
@@ -10,17 +10,6 @@
 
 #include "IntermittentBurstGeneratorEditor.h"
 #include "IntermittentBurstGenerator.h"
-
-
-bool isHexString(const String& input) {
-    for (int i = 0; i < input.length(); ++i) {
-        char c = input[i];
-        if (!isxdigit(c)) {
-            return false;
-        }
-    }
-    return !input.isEmpty();
-}
 
 bool isInteger(const String& input) {
     // Check if the string can be converted to an integer
@@ -31,74 +20,114 @@ IntermittentBurstGeneratorEditor::IntermittentBurstGeneratorEditor(GenericProces
     : GenericEditor(parentNode, useDefaultParameterEditors)
 
 {
-    desiredWidth = 235;
+    desiredWidth = 215;
 
-    const int TEXT_HT = 18;
-    int xPos = 5;
-    int yPos = 35;
+    const int HTextBox = 14;
+    const int HFonts = 14;
+    int xPos = 15;
+    int yPos = 25;
     int yUpadate = 20;
     int XTextBox = 125;
     int WTextBox = 35;
+    int wlabel = 60;
+    int wlabelS = 140;
     IntermittentBurstGenerator* p = (IntermittentBurstGenerator*) getProcessor();
 
-    Label* fileDisplayText = new Label("Channel mapping file", "Channel map");
-        fileDisplayText->setFont(Font("Small Text", 10, Font::plain));
-        fileDisplayText->setBounds(xPos, yPos+5, 80, 8); // (110, 95, 100, 8)
-        fileDisplayText->setColour(Label::textColourId, Colours::darkgrey);
-        addAndMakeVisible(fileDisplayText);
+    // STIM IN
+    stimInText = new Label("StimInText", "STIM IN:");
+        stimInText->setFont(Font("Default", HFonts, Font::plain));
+        stimInText->setBounds(xPos, yPos, wlabel, HTextBox);
+        addAndMakeVisible(stimInText);
 
-    fileButton = new UtilityButton("F:", Font("Small Text", 10, Font::bold));
-        fileButton->setRadius(5.0f);
-        fileButton->setBounds(xPos + 80, yPos , 20, 15); // (115, 105, 20, 20);
-        fileButton->addListener(this);
-        addAndMakeVisible(fileButton);
+    stimInLabel = new Label("StimInLabel", String(p->stimEventChannelIn));
+        stimInLabel->setBounds(xPos + wlabel, yPos, WTextBox, HTextBox);
+        stimInLabel->setFont(Font("Default", HFonts, Font::plain));
+        stimInLabel->setColour(Label::textColourId, Colours::white);
+        stimInLabel->setColour(Label::backgroundColourId, Colours::grey);
+        stimInLabel->setTooltip("Input stimulation event channel");
+        stimInLabel->setEditable(true);
+        stimInLabel->addListener(this);
+        addAndMakeVisible(stimInLabel);
 
-    fileNameLabel = new Label("Selected file", "No file selected");
-        fileNameLabel->setFont(Font("Small Text", 10, Font::plain));
-        fileNameLabel->setBounds(xPos + 110, yPos, 100, 15); // (140, 105, 70, 20);
-        fileNameLabel->setEditable(true);
-        fileNameLabel->setEnabled(false);
-        fileNameLabel->setColour(Label::backgroundColourId, Colours::lightgrey);
-        fileNameLabel->addListener(this);
-        addAndMakeVisible(fileNameLabel);
-        yPos = yPos + yUpadate;
-        xPos = xPos + 10;
+    // STIM OUT
+    stimOutText = new Label("StimOutText", "OUT:");
+    stimOutText->setFont(Font("Default", HFonts, Font::plain));
+    stimOutText->setBounds(xPos + 100, yPos, wlabel, HTextBox);
+    addAndMakeVisible(stimOutText);
+
+    stimOutLabel = new Label("StimOutLabel", String(p->stimEventChannelOut));
+        stimOutLabel->setBounds(xPos + 80 + wlabel, yPos, WTextBox, HTextBox);
+        stimOutLabel->setFont(Font("Default", HFonts, Font::plain));
+        stimOutLabel->setColour(Label::textColourId, Colours::white);
+        stimOutLabel->setColour(Label::backgroundColourId, Colours::grey);
+        stimOutLabel->setTooltip("Output stimulation event channel");
+        stimOutLabel->setEditable(true);
+        stimOutLabel->addListener(this);
+        addAndMakeVisible(stimOutLabel);
+
+    // Update position for the next group
+    yPos += yUpadate;
+
+    // SHAM IN
+    shamInText = new Label("ShamInText", "SHAM IN:");
+    shamInText->setFont(Font("Default", HFonts, Font::plain));
+    shamInText->setBounds(xPos, yPos, wlabel, HTextBox);
+    addAndMakeVisible(shamInText);
+
+    shamInLabel = new Label("ShamInLabel", String(p->shamEventChannelIn));
+        shamInLabel->setBounds(xPos + wlabel, yPos, WTextBox, HTextBox);
+        shamInLabel->setFont(Font("Default", HFonts, Font::plain));
+        shamInLabel->setColour(Label::textColourId, Colours::white);
+        shamInLabel->setColour(Label::backgroundColourId, Colours::grey);
+        shamInLabel->setTooltip("Input sham event channel");
+        shamInLabel->setEditable(true);
+        shamInLabel->addListener(this);
+        addAndMakeVisible(shamInLabel);
+
+    // SHAM OUT
+    shamOutText = new Label("ShamOutText", "OUT:");
+        shamOutText->setBounds(xPos + 100, yPos, wlabel, HTextBox);
+        shamOutText->setFont(Font("Default", HFonts, Font::plain));
+        addAndMakeVisible(shamOutText);
+
+    shamOutLabel = new Label("ShamOutLabel", String(p->shamEventChannelOut));
+        shamOutLabel->setBounds(xPos + 80 + wlabel, yPos, WTextBox, HTextBox);
+        shamOutLabel->setFont(Font("Default", HFonts, Font::plain));
+        shamOutLabel->setColour(Label::textColourId, Colours::white);
+        shamOutLabel->setColour(Label::backgroundColourId, Colours::grey);
+        shamOutLabel->setTooltip("Output stimulation event channel");
+        shamOutLabel->setEditable(true);
+        shamOutLabel->addListener(this);
+        addAndMakeVisible(shamOutLabel);
+
+    // Update position
+    yPos += yUpadate;
+
     pulsewidthText = new Label("PWPulseText", "Pulse Width (ms):");
-        pulsewidthText->setBounds(xPos, yPos, 140, 25);
+        pulsewidthText->setBounds(xPos, yPos, wlabelS, HTextBox);
+        pulsewidthText->setFont(Font("Default", HFonts, Font::plain));
         addAndMakeVisible(pulsewidthText);
     pulsewidthLabel = new Label("pulsewidthLabel", String(p->pulsewidth));
-        pulsewidthLabel->setBounds(xPos + XTextBox, yPos, WTextBox, 18);
-        pulsewidthLabel->setFont(Font("Default", 15, Font::plain));
+        pulsewidthLabel->setBounds(xPos + XTextBox + 15, yPos, WTextBox, HTextBox);
+        pulsewidthLabel->setFont(Font("Default", HFonts, Font::plain));
         pulsewidthLabel->setColour(Label::textColourId, Colours::white);
         pulsewidthLabel->setColour(Label::backgroundColourId, Colours::grey);
-        pulsewidthLabel->setTooltip("Minimum value should be greater than (1/Sampling rate)");
+        pulsewidthLabel->setTooltip("Pulse Width in milliseconds.");
         pulsewidthLabel->setEditable(true);
         pulsewidthLabel->addListener(this);
         addAndMakeVisible(pulsewidthLabel);
         yPos = yPos + yUpadate;
-
-    ttlpulseText = new Label("TTLPulseText", "TTL Pulse :");
-        ttlpulseText->setBounds(xPos, yPos, 140, 25);
-        ttlpulseText->setColour(Label::textColourId, Colours::black);
-        //addAndMakeVisible(ttlpulseText);
-        //yPos = yPos + yUpadate;
-    ttlpulseLabel = new Label("ttlpulseLabel", String(p->ttlpulse));
-        ttlpulseLabel->setBounds(xPos + XTextBox, yPos, WTextBox, TEXT_HT);
-        ttlpulseLabel->setFont(Font("Default", 15, Font::plain));
-        ttlpulseLabel->setColour(Label::textColourId, Colours::white);
-        ttlpulseLabel->setColour(Label::backgroundColourId, Colours::grey);
-        ttlpulseLabel->setEditable(true);
-        ttlpulseLabel->addListener(this);
-        //addAndMakeVisible(ttlpulseLabel);
        
-    ttlShamDurationText = new Label("ttlShamDurationText", "Sham Duration (s) :");
-        ttlShamDurationText->setBounds(xPos, yPos, 140, 25);
+    ttlShamDurationText = new Label("ttlShamDurationText", "Sham Duration (s):");
+        ttlShamDurationText->setBounds(xPos, yPos, wlabelS, HTextBox);
+        ttlShamDurationText->setFont(Font("Default", HFonts, Font::plain));
         ttlShamDurationText->setColour(Label::textColourId, Colours::black);
         addAndMakeVisible(ttlShamDurationText);
 
     ttlShamDurationLabel = new Label("ttlShamDurationLabel", String(p->shamDuration));
-        ttlShamDurationLabel->setBounds(xPos + XTextBox, yPos, WTextBox, TEXT_HT);
-        ttlShamDurationLabel->setFont(Font("Default", 15, Font::plain));
+        ttlShamDurationLabel->setBounds(xPos + XTextBox + 15, yPos, WTextBox, HTextBox);
+        ttlShamDurationLabel->setTooltip("Sham pulses for duration in seconds.");
+        ttlShamDurationLabel->setFont(Font("Default", HFonts, Font::plain));
         ttlShamDurationLabel->setColour(Label::textColourId, Colours::white);
         ttlShamDurationLabel->setColour(Label::backgroundColourId, Colours::grey);
         ttlShamDurationLabel->setEditable(true);
@@ -107,39 +136,19 @@ IntermittentBurstGeneratorEditor::IntermittentBurstGeneratorEditor(GenericProces
     yPos = yPos + yUpadate;
 
     ttlStimNumberText = new Label("ttlStimNumberText", "Stim Pulse:");
-        ttlStimNumberText->setBounds(xPos, yPos, 140, 25);
+        ttlStimNumberText->setBounds(xPos, yPos, wlabelS, HTextBox);
+        ttlStimNumberText->setFont(Font("Default", HFonts, Font::plain));
         ttlStimNumberText->setColour(Label::textColourId, Colours::black);
         addAndMakeVisible(ttlStimNumberText);
     ttlStimNumberLabel = new Label("ttlStimNumberLabel", String(p->stimPulseNum));
-        ttlStimNumberLabel->setBounds(xPos + XTextBox, yPos, WTextBox, TEXT_HT);
-        ttlStimNumberLabel->setFont(Font("Default", 15, Font::plain));
+        ttlStimNumberLabel->setBounds(xPos + XTextBox + 15, yPos, WTextBox, HTextBox);
+        ttlStimNumberLabel->setFont(Font("Default", HFonts, Font::plain));
         ttlStimNumberLabel->setColour(Label::textColourId, Colours::white);
         ttlStimNumberLabel->setColour(Label::backgroundColourId, Colours::grey);
         ttlStimNumberLabel->setEditable(true);
         ttlStimNumberLabel->addListener(this);
         addAndMakeVisible(ttlStimNumberLabel);
 
-}
-
-void IntermittentBurstGeneratorEditor::buttonClicked(Button* button)
-{
-    auto processor = static_cast<IntermittentBurstGenerator*>(getProcessor());
-    if (button == fileButton)
-    {
-        String supportedFormats = "*.json";
-
-        FileChooser chooseFileReaderFile("Please select a json file containing the markers mapping...",
-            lastFilePath,
-            supportedFormats);
-
-        if (chooseFileReaderFile.browseForFileToOpen())
-        {
-            if (processor->setMapPath(chooseFileReaderFile.getResult().getFullPathName().toStdString()))
-            {
-                fileNameLabel->setText(chooseFileReaderFile.getResult().getFileName(), dontSendNotification);
-            }
-        }
-    }
 }
 
 
@@ -170,44 +179,42 @@ void IntermittentBurstGeneratorEditor::labelTextChanged(juce::Label* label)
             processor->setParameter(IntermittentBurstGenerator::STIMPULSENUM, text.getFloatValue());
         }
     }
+    else if (label == stimInLabel)
+    {
+        String text = label->getText();
+        if (isInteger(text))
+        {
+            processor->setParameter(IntermittentBurstGenerator::STIMEVENTCHANNELIN, text.getFloatValue());
+        }
+    }
+    else if (label == stimOutLabel)
+    {
+        String text = label->getText();
+        if (isInteger(text))
+        {
+            processor->setParameter(IntermittentBurstGenerator::STIMEVENTCHANNELOUT, text.getFloatValue());
+        }
+    }
+    else if (label == shamInLabel)
+    {
+        String text = label->getText();
+        if (isInteger(text))
+        {
+            processor->setParameter(IntermittentBurstGenerator::SHAMEVENTCHANNELIN, text.getFloatValue());
+        }
+    }
+    else if (label == shamOutLabel)
+    {
+        String text = label->getText();
+        if (isInteger(text))
+        {
+            processor->setParameter(IntermittentBurstGenerator::SHAMEVENTCHANNELOUT, text.getFloatValue());
+        }
+    }
     else if (label == pulsewidthLabel)
     {
         String text = label->getText();
-        float SamplingRate = processor->getSampleRate();
-            if (float(text.getFloatValue()) <= (1.0f * 1000.0f/ SamplingRate)) // in milliseconds Making sure there are atleast two samples for the pulse
-            {
-                float MinimumValue = 1000.0f/ SamplingRate;
-                pulsewidthLabel->setText(String(MinimumValue,3), dontSendNotification);
-            }
-            else 
-            {
-                processor->setParameter(IntermittentBurstGenerator::PULSEWIDTH, text.getIntValue());
-            }
+        processor->setParameter(IntermittentBurstGenerator::PULSEWIDTH, text.getIntValue());
     }
 }
 
-
-void IntermittentBurstGeneratorEditor::saveCustomParameters(XmlElement* xml)
-{
-    auto processor = static_cast<IntermittentBurstGenerator*>(getProcessor());
-    XmlElement* mainNode = xml->createNewChildElement("IntermittentBurstGenerator");
-    mainNode->setAttribute("map_path", processor->channelMapPath);
-}
-
-void IntermittentBurstGeneratorEditor::loadCustomParameters(XmlElement* xml)
-{
-    forEachXmlChildElementWithTagName(*xml, xmlNode, "IntermittentBurstGenerator")
-    {
-        
-        auto processor = static_cast<IntermittentBurstGenerator*>(getProcessor());
-
-        if (xmlNode->hasAttribute("map_path"))
-        {
-            std::string path = xmlNode->getStringAttribute("map_path", "").toStdString();
-            if (processor->setMapPath(path))
-            {
-                fileNameLabel->setText(path.substr(path.find_last_of("/\\") + 1), dontSendNotification);
-            }
-        }
-    }
-}

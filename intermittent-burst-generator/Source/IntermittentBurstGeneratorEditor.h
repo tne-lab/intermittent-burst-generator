@@ -2,7 +2,7 @@
   ==============================================================================
 
     IntermittentBurstGeneratorEditor.h
-    Created: 3rd December 2024
+    Created: 7th December 2024
     Author:  Sumedh Sopan Nagrale
 
   ==============================================================================
@@ -25,27 +25,23 @@
 class IntermittentBurstGeneratorEditor
     : public GenericEditor
     , public Label::Listener
-    , public Button::Listener
 {
 public:
     IntermittentBurstGeneratorEditor(GenericProcessor* parentNode, bool useDefaultParameterEditors);
 
     void labelTextChanged(juce::Label* label) override;
 
-    void buttonClicked(Button* button) override;
-
-    void saveCustomParameters(XmlElement* xml) override;
-    void loadCustomParameters(XmlElement* xml) override;
-
 private:
-    ScopedPointer<Label> inChanLabel;
-    ScopedPointer<ComboBox> inChanBox;
+    ScopedPointer<Label> stimInLabel;
+    ScopedPointer<Label> stimInText;
+    ScopedPointer<Label> shamInLabel;
+    ScopedPointer<Label> shamInText;
 
-    ScopedPointer<ComboBox> pinBox;
+    ScopedPointer<Label> stimOutLabel;
+    ScopedPointer<Label> stimOutText;
+    ScopedPointer<Label> shamOutLabel;
+    ScopedPointer<Label> shamOutText;
 
-    ScopedPointer<UtilityButton> fileButton;
-    //ScopedPointer<Label> file;
-    ScopedPointer<Label> fileNameLabel;
     ScopedPointer<Label> pulsewidthLabel;
     ScopedPointer<Label> pulsewidthText;
     ScopedPointer<Label> ttlpulseText;
@@ -54,7 +50,7 @@ private:
     ScopedPointer<Label> ttlpulseLabel;
     ScopedPointer<Label> ttlShamDurationLabel;
     ScopedPointer<Label> ttlStimNumberLabel;
-    File lastFilePath;
+
 };
 
 
