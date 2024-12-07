@@ -2,7 +2,7 @@
   ==============================================================================
 
     IntermittentBurstGeneratorEditor.h
-    Created: 3rd December 2024
+    Created: 7th December 2024
     Author:  Sumedh Sopan Nagrale
 
   ==============================================================================
@@ -38,15 +38,16 @@ public:
     MetaDataDescriptorArray eventMetaDataDescriptors;
     TTLEventPtr turnoffEvent;  // Holds a turnoff event to be added later
 
-    bool setMapPath(std::string filePath);
-    std::string channelMapPath;
-
     enum Parameter
     {
         TTLPULSE,
         PULSEWIDTH,
         SHAMDURATION,
-        STIMPULSENUM
+        STIMPULSENUM,
+        STIMEVENTCHANNELIN,
+        STIMEVENTCHANNELOUT,
+        SHAMEVENTCHANNELIN,
+        SHAMEVENTCHANNELOUT
     };
 
 private:
@@ -57,19 +58,19 @@ private:
     float pulsewidth;
     float shamDuration;
     float stimPulseNum;
+    int stimEventChannelIn; // Channel used to track stimulation events
+    int stimEventChannelOut; // Channel used to track stimulation events
+    int shamEventChannelIn; // Channel used to track sham events
+    int shamEventChannelOut; // Channel used to track sham events
 
     // Private members
     int eventChannel;
-    
     int eventDurationSamp;
     uint8_t pinState;
     int eventCount;
     bool stimNoStimCondition;
     int nextEventHappens;
     bool sampledInitialFlag;
-    // Maps for channel and pin mappings
-    std::map<int, int> channelDelayMap;  // Maps incoming TTL channels to delay numbers (1-8)
-    std::unordered_map<int, uint64_t> pinTurnOffSamples;  // Maps pin numbers to timestamps for turn-off
 
 };
 

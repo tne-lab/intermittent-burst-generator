@@ -2,7 +2,7 @@
   ==============================================================================
 
 	IntermittentBurstGeneratorEditor.h
-	Created: 3rd December 2024
+	Created: 7th December 2024
 	Author:  Sumedh Sopan Nagrale
 
   ==============================================================================
@@ -15,18 +15,17 @@
 extern "C" {
 #endif
 }
-#include <fstream>
-#include <sstream>
-#include <bitset>
 
 // Constructor
 IntermittentBurstGenerator::IntermittentBurstGenerator()
 	: GenericProcessor("Intermittent Burst Generator"),
 	eventChannel(0),                   // Initialize eventChannel to 0
+	stimEventChannelIn(1),			   // Initialize stimulation event channel to 0
+	stimEventChannelOut(1),			   // Initialize stimulation event channel to 0
+	shamEventChannelIn(1),			   // Initialize sham event channel to 0
+	shamEventChannelOut(1),			   // Initialize sham event channel to 0
 	eventDurationSamp(0),              // Initialize eventDurationSamp to 0
 	pinState(0),                       // Initialize pinState to 0
-	channelDelayMap(),                   // Default initialize the map
-	pinTurnOffSamples(),
 	eventCount(0),
 	eventChannelPtr(nullptr),
 	pulsewidth(0.1),
@@ -51,7 +50,7 @@ IntermittentBurstGenerator::IntermittentBurstGenerator()
 	eventMetaDataDescriptors.add(eventDescriptor.release());
 }
 
-
+// Constructor
 void IntermittentBurstGenerator::setParameter(int parameterIndex, float newValue)
 {
 	switch (parameterIndex)
@@ -65,15 +64,22 @@ void IntermittentBurstGenerator::setParameter(int parameterIndex, float newValue
 	case SHAMDURATION:
 		shamDuration = static_cast<float>(newValue);
 		break;
+	case STIMEVENTCHANNELIN:
+		stimEventChannelIn = static_cast<int>(newValue);
+		break;
+	case STIMEVENTCHANNELOUT:
+		stimEventChannelOut = static_cast<int>(newValue);
+		break;
+	case SHAMEVENTCHANNELIN:
+		shamEventChannelIn = static_cast<int>(newValue);
+		break;
+	case SHAMEVENTCHANNELOUT:
+		shamEventChannelOut = static_cast<int>(newValue);
+		break;
 	case STIMPULSENUM:
 		stimPulseNum = static_cast<int>(newValue);
 		break;
 	}
-}
-
-// Binary string conversion
-std::string toBinaryString(uint8_t byte) {
-	return std::bitset<8>(byte).to_string();
 }
 
 // Editor creation
@@ -102,31 +108,29 @@ void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, co
 	{
 		
 		TTLEventPtr ttl = TTLEvent::deserializeFromMessage(event, channelInfo);
-		auto it = channelDelayMap.find(ttl->getChannel());
-		
-		//std::cout << "Event at: " << it->first << it->second << std::endl;
 		juce::int64 startTs = getTimestamp(0);
 		int nSamples = getNumSamples(0);
-
-		// To see if things are working right
-
-
-		if (it != channelDelayMap.end() && ttl->getState())
+		// Making sure the events are pertaining to stimulation and sham and nothing else
+		if (ttl->getState() && (ttl->getChannel() == stimEventChannelIn-1 || ttl->getChannel() == shamEventChannelIn-1))
 		{
-			int delayAtEventChannel = it->second;
-			
-			if (stimNoStimCondition == true)
+			// converting back to seconds and multiplying by sampling rate give samples
+			int eventDurationSamplesIn = int(std::floor(sampleRate * (float(pulsewidth) / 1000.0f)));
+		
+			if (stimNoStimCondition == true && ttl->getChannel() == stimEventChannelIn - 1)
 			{
 
-
-				// converting back to seconds and multiplying by sampling rate give samples
-				int eventDurationSamplesIn = int(std::floor(sampleRate * (float(pulsewidth) / 1000.0f)));
-
+				// if the number of pulse that needs to be send is more than one do this other wise
+				// for now this will be just one
 				for (int pulseIndex = 0; pulseIndex < ttlpulse; ++pulseIndex) {
-					juce::int64 adjustedTimestamp = event.getTimeStamp() + (eventDurationSamplesIn) * (pulseIndex + 1);
-					triggerEvent(getTimestamp(0), adjustedTimestamp, delayAtEventChannel, eventDurationSamplesIn, sampleRate);
+					// This is where we could create copies of the even by delaying it by certain amount.
+					// The original event is 5 ms long in active duration
+					juce::int64 adjustedTimestamp = event.getTimeStamp();// +(eventDurationSamplesIn) * (pulseIndex + 1);
+					triggerEvent(getTimestamp(0), adjustedTimestamp, stimEventChannelOut, eventDurationSamplesIn, sampleRate); // for zero indexing within the function
 					eventCount = eventCount + 1;
-					std::cout << "Event at" << eventChannel << ", Event Trigger count: " << eventCount << " Current time:" << startTs << " Next time:" << nextEventHappens << std::endl;
+					std::cout << "Stim Event (Out: " << stimEventChannelOut
+						<< " ,In from: " << stimEventChannelIn << ",Current In:" << ttl->getChannel() + 1<< "), Event Trigger count: " << eventCount
+						<< " Current time: " << startTs
+						<< " Next time: " << nextEventHappens << std::endl;
 				}
 				int TotalPulses = stimPulseNum; 
 				if (eventCount >= TotalPulses)
@@ -135,109 +139,37 @@ void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, co
 					eventCount = 0;
 					nextEventHappens = startTs + (shamDuration * sampleRate);
 				}
-
 			}
 			else
 			{
-				std::cout << "No trigger Event at" << eventChannel << ", Event Trigger count: " << eventCount << " Current time:" << startTs << " Next time:" << nextEventHappens << std::endl;
-				// Do not stim
-				// if time is greater than X seconds stim
-				if (startTs >= nextEventHappens) {
-					std::cout << "Reset at " << startTs << " Next time:" << nextEventHappens << std::endl;
-					stimNoStimCondition = true;
-					eventCount = 0;
+				if (stimNoStimCondition == false)
+				{
+					/* juce::int64 eventOriginalTime = event.getTimeStamp();// This can be ysed to create delayed version of events +(eventDurationSamplesIn) * (pulseIndex + 1);
+					triggerEvent(getTimestamp(0), eventOriginalTime, stimEventChannelOut, eventDurationSamplesIn, sampleRate); // for zero indexing within the function*/
+					if (ttl->getChannel() == shamEventChannelIn - 1) {
+						std::cout << "Sham Event (Out: " << shamEventChannelOut
+							<< " , In from: " << shamEventChannelIn << ",Current In:" << ttl->getChannel() + 1 << "), Event Trigger count: " << eventCount
+							<< " Current time: " << startTs
+							<< " Next time: " << nextEventHappens << std::endl;
+					}
+					else {
+						std::cout << "Not triggered: Stim Event (Out: " << shamEventChannelOut
+							<< " , In from: " << shamEventChannelIn << ",Current In:" << ttl->getChannel() + 1 << "), Event Trigger count: " << eventCount
+							<< " Current time: " << startTs
+							<< " Next time: " << nextEventHappens << std::endl;
+					}
+					// if time is greater than X seconds stim
+					if (startTs >= nextEventHappens) {
+						std::cout << "Reset at " << startTs << " Next time:" << nextEventHappens << std::endl;
+						stimNoStimCondition = true;
+						eventCount = 0;
+					}
 				}
 
 			}
 		}
 	}
 	
-}
-
-// Channel-pin mapping
-// Adapted from parallel port
-bool IntermittentBurstGenerator::setMapPath(std::string filePath)
-{
-	if (filePath.empty())
-	{
-		return false;
-	}
-	channelDelayMap.clear();
-	std::ifstream file(filePath);
-
-	if (!file)
-	{
-		std::cout << "Cannot open channel-pin config file " << filePath << std::endl;
-		CoreServices::sendStatusMessage("Cannot open channel-pin config file");
-		return false;
-	}
-
-	channelMapPath = filePath;
-
-	// Perform a naive JSON parsing
-	try
-	{
-		std::stringstream ss;
-		ss << file.rdbuf();
-		file.close();
-
-		// remove curly braces
-		std::string str = ss.str();
-		str.erase(std::remove(str.begin(), str.end(), '{'), str.end());
-		str.erase(std::remove(str.begin(), str.end(), '}'), str.end());
-
-		// split by comma
-		std::vector<std::string> pairs;
-		size_t pos = 0;
-		std::string token;
-		while ((pos = str.find(',')) != std::string::npos)
-		{
-			pairs.push_back(str.substr(0, pos));
-			str.erase(0, pos + 1);
-		}
-		pairs.push_back(str);
-
-		for (const auto& pair : pairs)
-		{
-			size_t colonPos = pair.find(':');
-			if (colonPos != std::string::npos)
-			{
-				std::string channelStr = trim(pair.substr(0, colonPos));
-				int channel = std::stoi(channelStr) - 1;
-				int delay = std::stoi(trim(pair.substr(colonPos + 1)));
-
-				if (channel < 0 || channel > 7)
-				{
-					std::cerr << "Channel number out of range in mapping: " << pair << std::endl;
-					continue;
-				}
-
-				std::cout << "Event Delay setting map entry -- Channel:" << channel << ". Delay in the event:" << delay << std::endl;
-				channelDelayMap[channel] = delay;
-			}
-		}
-	}
-	catch (const std::runtime_error& re)
-	{
-		std::cout << "Failed to read channel to pin mapping file with runtime error: " << re.what() << std::endl;
-		return false;
-	}
-	catch (const std::exception& ex)
-	{
-		std::cout << "Failed to read channel to pin mapping file with exception: " << ex.what() << std::endl;
-		return false;
-	}
-
-	return true;
-}
-
-// String trimming helper
-inline std::string IntermittentBurstGenerator::trim(const std::string const_str)
-{
-	std::string str = const_str;
-	str.erase(str.find_last_not_of(" \n\r\t\"") + 1);
-	str.erase(0, str.find_first_not_of(" \n\r\t\""));
-	return str;
 }
 
 // Trigger Event required to send the events
@@ -249,9 +181,9 @@ void IntermittentBurstGenerator::triggerEvent(juce::int64 bufferstartTs, int Eve
 	MetaDataValueArray metadataArray;
 		{
 			int metadataIndex = 0;
-			MetaDataValue* crossingPointValue = new MetaDataValue(*eventMetaDataDescriptors[metadataIndex++]);
-			crossingPointValue->setValue(bufferstartTs + EventStratTime);
-			metadataArray.add(crossingPointValue);
+			MetaDataValue* currentEventTime = new MetaDataValue(*eventMetaDataDescriptors[metadataIndex++]);
+			currentEventTime->setValue(bufferstartTs + EventStratTime);
+			metadataArray.add(currentEventTime);
 		}
 
 	// Setup event channel
@@ -282,7 +214,7 @@ void IntermittentBurstGenerator::triggerEvent(juce::int64 bufferstartTs, int Eve
 		addEvent(eventChannelPtr, eventOff, sampleNumberOff);
 
 	// To see if things are working right
-		std::cout << "At Event "<< eventChannel << " Sample Rate: " << samplingRate
+		std::cout <<  "At Event channel "<< eventChannel << " Sample Rate: " << samplingRate
 			<< ", Event 'On' triggered at sample: " << sampleNumberOn
 			<< ", Event 'Off' triggered at sample: " << sampleNumberOff
 			<< ", Duration (milliseconds): " << 1000.0f * (float(sampleNumberOff) - float(sampleNumberOn)) / samplingRate
