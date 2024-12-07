@@ -28,13 +28,13 @@ IntermittentBurstGenerator::IntermittentBurstGenerator()
 	pinState(0),                       // Initialize pinState to 0
 	eventCount(0),
 	eventChannelPtr(nullptr),
-	pulsewidth(0.1),
+	pulsewidth(5),
 	ttlpulse(1),
 	stimNoStimCondition(false),
 	nextEventHappens(0),
 	sampledInitialFlag(false),
 	shamDuration(7),
-	stimPulseNum(7)
+	stimPulseNum(10)
 {
 	// Set the processor type
 	setProcessorType(PROCESSOR_TYPE_SINK);
