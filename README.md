@@ -39,7 +39,7 @@ Building the plugins requires [CMake](https://cmake.org/). Detailed instructions
 If you are building this plugin outside the `oep-installation` installation, follow these steps:
 
 1. **Navigate to the `intermittent-burst-generator` folder**  
-   This folder should be located next to the `Source` and `Build` folders.
+   This folder should be located next to the `Source` and `Build` folders. if the 'Build' folder doesn't exist create one adjacent to 'Source' folder.
 
 2. **Open Git Bash**  
    Launch Git Bash or your preferred terminal.
