@@ -22,7 +22,7 @@ This plugin can serve the purpose of alternating between stimulation trains and 
   The **OUT** textbox corresponds to the event channel where the sham event needs to be sent.
 
 - **Pulse Width (ms):**  
-  Specifies the duration (in milliseconds) of each pulse triggered by the Intermittent Burst Generator. This pulse is sent through the channels specified in the JSON configuration file.
+  Specifies the duration (in milliseconds) of each pulse triggered by the Intermittent Burst Generator. This pulse is sent through the channels specified in the text above.
 
 - **Sham Duration (s):**  
   Defines how long (in seconds) the sham pulses or events are sent. This value controls the duration of the sham period.
