@@ -144,8 +144,8 @@ void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, co
 			{
 				if (stimNoStimCondition == false)
 				{
-					juce::int64 eventOriginalTime = event.getTimeStamp();// This can be ysed to create delayed version of events +(eventDurationSamplesIn) * (pulseIndex + 1);
-					triggerEvent(getTimestamp(0), eventOriginalTime, stimEventChannelOut, eventDurationSamplesIn, sampleRate); // for zero indexing within the function
+					/* juce::int64 eventOriginalTime = event.getTimeStamp();// This can be ysed to create delayed version of events +(eventDurationSamplesIn) * (pulseIndex + 1);
+					triggerEvent(getTimestamp(0), eventOriginalTime, stimEventChannelOut, eventDurationSamplesIn, sampleRate); // for zero indexing within the function*/
 					if (ttl->getChannel() == shamEventChannelIn - 1) {
 						std::cout << "Sham Event (Out: " << shamEventChannelOut
 							<< " , In from: " << shamEventChannelIn << ",Current In:" << ttl->getChannel() + 1 << "), Event Trigger count: " << eventCount
