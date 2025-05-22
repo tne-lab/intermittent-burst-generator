@@ -232,9 +232,9 @@ void IntermittentBurstGenerator::createEventChannels()
 	// Create and configure the event channel
 	float sampleRate = inputChannel->getSampleRate();
 	EventChannel* eventChannel = new EventChannel(EventChannel::TTL, 8, 1, sampleRate, this);
-	eventChannel->setName("Event Delay output");
+	eventChannel->setName("IBG Event Output");
 	eventChannel->setDescription("Triggers when an event is received for two TTL pulses.");
-	eventChannel->setIdentifier("Event.delay");
+	eventChannel->setIdentifier("Event.IBG");
 
 	// Add metadata for the source channel
 	// Identify that the plugin has been responsible for creation of this events.
