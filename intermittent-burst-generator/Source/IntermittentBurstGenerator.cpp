@@ -3,6 +3,7 @@
 
 	IntermittentBurstGeneratorEditor.h
 	Created: 7th December 2024
+	Modified: 22nd May 2025 for Bug-- Pause & play caused the time to reset and counting for sham to restart
 	Author:  Sumedh Sopan Nagrale
 
   ==============================================================================
@@ -20,10 +21,10 @@ extern "C" {
 IntermittentBurstGenerator::IntermittentBurstGenerator()
 	: GenericProcessor("Intermittent Burst Generator"),
 	eventChannel(0),                   // Initialize eventChannel to 0
-	stimEventChannelIn(1),			   // Initialize stimulation event channel to 0
-	stimEventChannelOut(1),			   // Initialize stimulation event channel to 0
-	shamEventChannelIn(1),			   // Initialize sham event channel to 0
-	shamEventChannelOut(1),			   // Initialize sham event channel to 0
+	stimEventChannelIn(1),			   // Initialize stimulation event channel to 1
+	stimEventChannelOut(1),			   // Initialize stimulation event channel to 1
+	shamEventChannelIn(1),			   // Initialize sham event channel to 1
+	shamEventChannelOut(1),			   // Initialize sham event channel to 1
 	eventDurationSamp(0),              // Initialize eventDurationSamp to 0
 	pinState(0),                       // Initialize pinState to 0
 	eventCount(0),
@@ -50,7 +51,7 @@ IntermittentBurstGenerator::IntermittentBurstGenerator()
 	eventMetaDataDescriptors.add(eventDescriptor.release());
 }
 
-// Constructor
+// Parameter setter
 void IntermittentBurstGenerator::setParameter(int parameterIndex, float newValue)
 {
 	switch (parameterIndex)
@@ -92,6 +93,7 @@ AudioProcessorEditor* IntermittentBurstGenerator::createEditor()
 // Pin state handling during audio processing
 void IntermittentBurstGenerator::process(AudioSampleBuffer& continuousBuffer)
 {
+	totalSamplesProcessed += getNumSamples(0);
 	checkForEvents(false);
 }
 
@@ -108,7 +110,8 @@ void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, co
 	{
 		
 		TTLEventPtr ttl = TTLEvent::deserializeFromMessage(event, channelInfo);
-		juce::int64 startTs = getTimestamp(0);
+		juce::int64 currentTimeInSamples = totalSamplesProcessed;
+
 		int nSamples = getNumSamples(0);
 		// Making sure the events are pertaining to stimulation and sham and nothing else
 		if (ttl->getState() && (ttl->getChannel() == stimEventChannelIn-1 || ttl->getChannel() == shamEventChannelIn-1))
@@ -127,40 +130,36 @@ void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, co
 					juce::int64 adjustedTimestamp = event.getTimeStamp();// +(eventDurationSamplesIn) * (pulseIndex + 1);
 					triggerEvent(getTimestamp(0), adjustedTimestamp, stimEventChannelOut, eventDurationSamplesIn, sampleRate); // for zero indexing within the function
 					eventCount = eventCount + 1;
-					std::cout << "Stim Event (Out: " << stimEventChannelOut
-						<< " ,In from: " << stimEventChannelIn << ",Current In:" << ttl->getChannel() + 1<< "), Event Trigger count: " << eventCount
-						<< " Current time: " << startTs
-						<< " Next time: " << nextEventHappens << std::endl;
+					logEventInfo("STIMULATION", stimEventChannelIn, stimEventChannelOut, sampleRate);
 				}
 				int TotalPulses = stimPulseNum; 
 				if (eventCount >= TotalPulses)
 				{
+					std::cout << std::endl << "----------------" << "Sham Starts" << "----------------";
 					stimNoStimCondition = false;
 					eventCount = 0;
-					nextEventHappens = startTs + (shamDuration * sampleRate);
+					nextEventHappens = currentTimeInSamples + (shamDuration * sampleRate);
 				}
 			}
 			else
 			{
 				if (stimNoStimCondition == false)
 				{
-					juce::int64 eventOriginalTime = event.getTimeStamp();// This can be ysed to create delayed version of events +(eventDurationSamplesIn) * (pulseIndex + 1);
+					juce::int64 eventOriginalTime = event.getTimeStamp();// This can be used to create delayed version of events +(eventDurationSamplesIn) * (pulseIndex + 1);
 					triggerEvent(getTimestamp(0), eventOriginalTime, shamEventChannelOut, eventDurationSamplesIn, sampleRate); // for zero indexing within the function
 					if (ttl->getChannel() == shamEventChannelIn - 1) {
-						std::cout << "Sham Event (Out: " << shamEventChannelOut
-							<< " , In from: " << shamEventChannelIn << ",Current In:" << ttl->getChannel() + 1 << "), Event Trigger count: " << eventCount
-							<< " Current time: " << startTs
-							<< " Next time: " << nextEventHappens << std::endl;
+						logEventInfo("SHAM", shamEventChannelIn, shamEventChannelOut, sampleRate);
 					}
 					else {
-						std::cout << "Not triggered: Stim Event (Out: " << shamEventChannelOut
+						std::cout << "##### Not triggered: Stim Event (Out: " << shamEventChannelOut
 							<< " , In from: " << shamEventChannelIn << ",Current In:" << ttl->getChannel() + 1 << "), Event Trigger count: " << eventCount
-							<< " Current time: " << startTs
+							<< " Current time: " << currentTimeInSamples
 							<< " Next time: " << nextEventHappens << std::endl;
 					}
 					// if time is greater than X seconds stim
-					if (startTs >= nextEventHappens) {
-						std::cout << "Reset at " << startTs << " Next time:" << nextEventHappens << std::endl;
+					if (currentTimeInSamples >= nextEventHappens) {
+						std::cout << std::endl << "----------------" << "Stimulation Starts" << "----------------";
+						std::cout << "Reset @ " << currentTimeInSamples << " | Next Trigger @: " << nextEventHappens << std::endl;
 						stimNoStimCondition = true;
 						eventCount = 0;
 					}
@@ -214,11 +213,8 @@ void IntermittentBurstGenerator::triggerEvent(juce::int64 bufferstartTs, int Eve
 		addEvent(eventChannelPtr, eventOff, sampleNumberOff);
 
 	// To see if things are working right
-		std::cout <<  "At Event channel "<< eventChannel << " Sample Rate: " << samplingRate
-			<< ", Event 'On' triggered at sample: " << sampleNumberOn
-			<< ", Event 'Off' triggered at sample: " << sampleNumberOff
-			<< ", Duration (milliseconds): " << 1000.0f * (float(sampleNumberOff) - float(sampleNumberOn)) / samplingRate
-			<< std::endl;
+		std::cout << std::endl<< "[Trigged @ - CH" << eventChannel <<" ] for ";
+
 	
 }
 
@@ -264,4 +260,17 @@ void IntermittentBurstGenerator::createEventChannels()
 
 	// Add the created event channel to the array
 	eventChannelPtr = eventChannelArray.add(eventChannel);
+}
+
+void IntermittentBurstGenerator::logEventInfo(const std::string& type, int inChannel, int outChannel, float sampleRate)
+{
+	float currentTimeSec = static_cast<float>(totalSamplesProcessed) / sampleRate;
+	float nextTimeSec = static_cast<float>(nextEventHappens) / sampleRate;
+
+	std::cout << type << " Event | In: " << inChannel
+		<< ", Out: " << outChannel
+		<< ", Count: " << eventCount
+		<< ", Time: " << juce::String(currentTimeSec, 0).toStdString() << "s"
+		<< ", Next Stim after: " << juce::String(nextTimeSec, 0).toStdString();
+
 }
