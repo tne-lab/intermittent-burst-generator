@@ -3,6 +3,7 @@
 
     IntermittentBurstGeneratorEditor.h
     Created: 7th December 2024
+    Modified: 22nd May 2025 Bug: resetting sample and thus the sham took longer
     Author:  Sumedh Sopan Nagrale
 
   ==============================================================================
@@ -31,6 +32,7 @@ public:
     //public method
     void triggerEvent(juce::int64 bufferstartTs, int EventStratTime, int eventChannelNum, 
         int eventDurationSamplesIn, float samplingRate);
+    void logEventInfo(const std::string& type, int inChannel, int outChannel, float sampleRate);
 
 
     // Public members
@@ -71,6 +73,9 @@ private:
     bool stimNoStimCondition;
     int nextEventHappens;
     bool sampledInitialFlag;
+
+    juce::int64 totalSamplesProcessed = 0;
+
 
 };
 
