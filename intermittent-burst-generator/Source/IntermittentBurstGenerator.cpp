@@ -101,6 +101,8 @@ void IntermittentBurstGenerator::process(AudioSampleBuffer& continuousBuffer)
 void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, const MidiMessage& event, int samplePosition)
 {
 	float sampleRate = getTotalDataChannels() > 0 ? getDataChannel(0)->getSampleRate() : 30000;
+	static bool prevRecStatus = false; //to reset event count once when recording starts
+	bool recordingStatus = CoreServices::getRecordingStatus();
 	if (sampledInitialFlag == false) {
 		nextEventHappens = sampleRate * shamDuration;
 		sampledInitialFlag = true;
@@ -118,7 +120,24 @@ void IntermittentBurstGenerator::handleEvent(const EventChannel* channelInfo, co
 		{
 			// converting back to seconds and multiplying by sampling rate give samples
 			int eventDurationSamplesIn = int(std::floor(sampleRate * (float(pulsewidth) / 1000.0f)));
-		
+
+            // resetting event count when recording starts
+			if (recordingStatus == true && !prevRecStatus)
+			{
+				if (stimNoStimCondition == true) {
+					std::cout << "---------------- Recording started: Stimulation reset ---------------" << std::endl;
+				}
+				if (stimNoStimCondition == false) {
+					std::cout << "---------------- Recording started ------------------" << std::endl;
+				}
+				eventCount = 0;
+				prevRecStatus = recordingStatus;
+			} 
+			if (recordingStatus == false && prevRecStatus == true)
+			{
+				//reset when recording is stopped
+				prevRecStatus = false;
+			}			
 			if (stimNoStimCondition == true && ttl->getChannel() == stimEventChannelIn - 1)
 			{
 
@@ -274,3 +293,4 @@ void IntermittentBurstGenerator::logEventInfo(const std::string& type, int inCha
 		<< ", Next Stim after: " << juce::String(nextTimeSec, 0).toStdString();
 
 }
+
